@@ -1,7 +1,6 @@
-# DataVisualization_Group15
-Visualizations on World Happiness Index
+# Project Proposal: Analysis of World Happiness Index Changes (2015-2022)
 
-# Proposal Brief 
+## Overview
  
 We are tracking the changes between 2015 and 2022 in the world happiness index, most importantly focusing on the impact of Covid on total score and the variables that make up the total score. We also check the importance of each variable’s effect on the total score by identifying the variables with higher correlation (GDP per capita, healthy life expectancy, and Social Support) and do a deeper analysis to detect some outliers that go against the general trend, for example, by retaining high social support values even though their GDP per capita is not the greatest. There are visualisations showing the countries that experience the highest change in total score and the region these countries are from, how regional averages have changed over time, how different variables change based on different regions, and how different variables are correlated with the total score calculated. 
 
