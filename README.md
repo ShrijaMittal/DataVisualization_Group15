@@ -17,7 +17,7 @@ What factors are mostly correlated with the actual rank
 What is the source of the data you will be using? 
 Happiness index report from 2015-2022 with the associated variables that influence the rank 
 
- 
+ eknlakndlakndla
 
 What statistical techniques do you think you may be using? 
 Logistic model to predict the rank 
