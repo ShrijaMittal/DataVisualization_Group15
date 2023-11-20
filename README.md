@@ -27,7 +27,7 @@ We propose a comprehensive analysis of the World Happiness Index spanning the ye
 ### Variable Correlations:
 - Generosity appears to be less correlated with the overall happiness score compared to GDP per capita, healthy life expectancy, and social support.
 - GDP per capita in Western European and North American countries exhibits the least deviation within their regions, emphasizing regional disparities in economic well-being.
-- 
+
 ## Usage:
 To explore our findings, review the Jupyter Notebook and associated code in the "Analysis" directory. Visualizations and additional details can be found in the notebook.
 
