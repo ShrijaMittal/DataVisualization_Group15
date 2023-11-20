@@ -1,7 +1,43 @@
 # Project Proposal: Analysis of World Happiness Index Changes (2015-2022)
 
-## Overview
- 
-We are tracking the changes between 2015 and 2022 in the world happiness index, most importantly focusing on the impact of Covid on total score and the variables that make up the total score. We also check the importance of each variable’s effect on the total score by identifying the variables with higher correlation (GDP per capita, healthy life expectancy, and Social Support) and do a deeper analysis to detect some outliers that go against the general trend, for example, by retaining high social support values even though their GDP per capita is not the greatest. There are visualisations showing the countries that experience the highest change in total score and the region these countries are from, how regional averages have changed over time, how different variables change based on different regions, and how different variables are correlated with the total score calculated. 
+## Introduction
+We propose a comprehensive analysis of the World Happiness Index spanning the years 2015 to 2022, with a primary focus on understanding the impact of the COVID-19 pandemic on the overall happiness score and the contributing variables. Our research aims to uncover trends, identify outliers, and assess the significance of various factors, such as GDP per capita, healthy life expectancy, and social support, on the total happiness score.
 
-To summarise sum of the findings that the visualisations are showing, the life expectancy of the 20 countries with the highest healthy life expectancy have decreased noticeably due to Covid which seems to be true of the rest of the world. Central and Eastern Europe had the highest mean happiness score increase as a region, and combined with Sub Saharan Africa dominated the top 20 risers in score. Sub Saharan Africa, interestingly, also got the lion’s share in top 20 fallers with 35%, hinting at polarisation between countries in the region. For the variables, it can be said that generosity seems to be noticeably less correlated with score than other variables, with GDP per capita, healthy life expectancy and social support being the most correlated. In GDP per capita, Western European and North American countries showed the least deviation among the countries in these regions when compared to countries of other regions.  
+## Objectives
+### Impact of COVID-19:
+- Analyze changes in the total happiness score between 2015 and 2022, with a specific focus on the influence of the COVID-19 pandemic.
+- Examine variations in individual variables contributing to the total score during the pandemic.
+
+### Variable Correlation and Outliers:
+- Identify variables with higher correlation to the total happiness score, emphasizing GDP per capita, healthy life expectancy, and social support.
+- Conduct an in-depth analysis to detect outliers, exploring instances of countries deviating from general trends.
+
+### Visualizations:
+- Present visualizations illustrating countries with significant changes in total happiness scores, accompanied by their respective regions.
+- Depict how regional averages have evolved over time and explore the relationship between different variables and regions.
+- Showcase correlations between different variables and their impact on the calculated total happiness score.
+
+## Key Findings:
+### Life Expectancy Impact:
+- Noticeable decrease in life expectancy for the top 20 countries with the highest healthy life expectancy, indicative of a global trend likely influenced by the COVID-19 pandemic.
+
+### Regional Trends:
+- Central and Eastern Europe experienced the highest mean increase in happiness scores, dominating the top 20 countries with the greatest rise. Sub-Saharan Africa showcased both significant rises and falls, hinting at regional polarization.
+
+### Variable Correlations:
+- Generosity appears to be less correlated with the overall happiness score compared to GDP per capita, healthy life expectancy, and social support.
+- GDP per capita in Western European and North American countries exhibits the least deviation within their regions, emphasizing regional disparities in economic well-being.
+- 
+## Usage:
+To explore our findings, review the Jupyter Notebook and associated code in the "Analysis" directory. Visualizations and additional details can be found in the notebook.
+
+## Data Source:
+World Happiness Index, 2015-2022
+
+## Team Members:
+1. Mizrap Durakoglu
+2. Ziyue Hua
+3. Brandon Lau
+4. Shrija Mittal
+5. Alexander Skovbo
+
