@@ -18,8 +18,9 @@ We propose a comprehensive analysis of the World Happiness Index spanning the ye
 - Showcase correlations between different variables and their impact on the calculated total happiness score.
 
 ## Key Findings:
-### Life Expectancy Impact:
+### Covid Impact:
 - Noticeable decrease in life expectancy for the top 20 countries with the highest healthy life expectancy, indicative of a global trend likely influenced by the COVID-19 pandemic.
+- Significant decrease in Social Support for all countries, indicating that people felt alone and lacked support from family and government.
 
 ### Regional Trends:
 - Central and Eastern Europe experienced the highest mean increase in happiness scores, dominating the top 20 countries with the greatest rise. Sub-Saharan Africa showcased both significant rises and falls, hinting at regional polarization.
