@@ -54,6 +54,9 @@ library(showtext)
 library(RColorBrewer)
 library(rcartocolor)
 library(patchwork)
+library(maps)
+library(dplyr)
+
 
 font_add_google("Lato")
 showtext_auto()
@@ -1125,6 +1128,135 @@ ggplot(df_temp, aes(x = GDP_per_cap, y = Corruption, size = SocialSupport)) +
     y = "Corruption",
     size = "SocialSupport"
   ) 
+```
+
+```{r}
+# Map for 2015
+
+# Plot the world map with happiness scores
+world_map <- map_data("world")
+# Replace "USA" and "UK" with "United States" and "United Kingdom" in world_map
+world_map$region[world_map$region == "USA"] <- "United States"
+world_map$region[world_map$region == "UK"] <- "United Kingdom"
+
+# Merge happiness data with world map data
+merged_data <- merge(world_map, happiness_clean, by.x = "region", by.y = "Country", all.x = TRUE) %>%
+  filter(Year == 2015)
+
+# Find missing regions
+missing_regions <- setdiff(world_map$region, merged_data$region)
+
+# Create a separate data frame for missing regions with a dummy value (e.g., -1) for Score
+missing_data <- data.frame(region = missing_regions, Score = -1, Year = 2015)
+
+# Merge missing_data with merged_data
+merged_data <- bind_rows(merged_data, missing_data)
+na_color <- "gray"
+# Plot the world map with data
+plot1 <- ggplot(merged_data, aes(map_id = region, fill = Score)) +
+  geom_map(map = world_map, color = "black", linewidth = 0.1) +
+  expand_limits(x = world_map$long, y = world_map$lat) +
+  theme_void() +
+  scale_fill_carto_c(name = "region",
+                           type = "diverging", palette = "Earth", direction = -1, na.value = na_color,
+                     limits = c(0, max(merged_data$Score, na.rm = TRUE))) +
+  labs(
+    title = "Map of World with Happiness Index Score of 2015",
+    subtitle = "This visualization represents the global happiness index scores for the year 2015. <br>The intensity of color corresponds to the happiness score, <br>with darker shades indicating higher scores. Notably, the top rankings are mostly <br>Western European countries, while countries in Sub-Saharan Africa often show lower index scores.",
+    caption = "Source: World Happiness Index, 2015-2022",
+    color = "Region",
+  ) +
+  theme(
+    plot.title = element_text(
+    color = "grey10", 
+    size = 16, 
+    face = "bold",
+    margin = margin(t = 5),
+  ),
+  # Customize subtitle appearence
+  plot.subtitle = element_markdown(
+    color = "grey30", 
+    size = 11,
+    lineheight = 1,
+    margin = margin(t = 5, b = 10)
+  ),
+  # Title and caption are going to be aligned
+  plot.title.position = "plot",
+  legend.position = "none",
+  plot.caption.position = "plot", 
+  plot.caption = element_text(
+    color = "grey30",
+    size = 9,
+    lineheight = 1.2,
+    hjust = 0,
+    margin = margin(t = 10)
+  )
+  ) +
+    theme(plot.margin = margin(10, 40, 10, 40)) 
+
+plot1
+```
+
+```{r}
+# Map for 2022
+
+# Create new dataset for 2022 
+merged_data_2022 <- merge(world_map, happiness_clean , by.x = "region", by.y = "Country", all.x = TRUE) %>%
+  filter(Year == 2022)
+
+# Find missing regions
+missing_regions_2022 <- setdiff(world_map$region, merged_data_2022$region)
+
+# Create a separate data frame for missing regions with a dummy value (e.g., -1) for Score
+missing_data_2022 <- data.frame(region = missing_regions_2022, Score = -1, Year = 2022)
+
+# Merge missing_data with merged_data
+merged_data_2022 <- bind_rows(merged_data_2022, missing_data_2022)
+na_color <- "gray"
+
+# Plot map for 2022
+plot2 <- ggplot(merged_data_2022, aes(map_id = region, fill = Score)) +
+  geom_map(map = world_map, color = "black", linewidth = 0.1) +
+  expand_limits(x = world_map$long, y = world_map$lat) +
+  theme_void() +
+  scale_fill_carto_c(name = "region",
+                           type = "diverging", palette = "Earth", direction = -1, na.value = na_color,
+                     limits = c(0, max(merged_data$Score, na.rm = TRUE))) +
+  labs(
+    title = "Map of World with Happiness Index Score of 2022",
+    subtitle = "This visualization represents the global happiness index scores for the year 2022. <br>The intensity of color corresponds to the happiness score, <br>with darker shades indicating higher scores. Notably, in 2022, the top rankings are all <br>Western European countries, while countries in Sub-Saharan Africa remain to show relatively <br>lower index scores, but the country with the lowest score (Afghanistan) belongs to South Asia, <br>which may be due to the influence of the Taliban.",
+    caption = "Source: World Happiness Index, 2015-2022",
+    color = "Region",
+  ) +
+  theme(
+    plot.title = element_text(
+    color = "grey10", 
+    size = 16, 
+    face = "bold",
+    margin = margin(t = 5),
+  ),
+  # Customize subtitle appearence
+  plot.subtitle = element_markdown(
+    color = "grey30", 
+    size = 11,
+    lineheight = 1,
+    margin = margin(t = 5, b = 10)
+  ),
+  # Title and caption are going to be aligned
+  plot.title.position = "plot",
+  legend.position = "none",
+  plot.caption.position = "plot", 
+  plot.caption = element_text(
+    color = "grey30",
+    size = 9,
+    lineheight = 1.2,
+    hjust = 0,
+    margin = margin(t = 10)
+  )
+  ) +
+   theme(plot.margin = margin(10, 40, 10, 40)) 
+
+plot2
 
 ```
 
