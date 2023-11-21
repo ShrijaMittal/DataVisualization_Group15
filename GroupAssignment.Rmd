@@ -1139,6 +1139,7 @@ world_map <- map_data("world")
 # Replace "USA" and "UK" with "United States" and "United Kingdom" in world_map
 world_map$region[world_map$region == "USA"] <- "United States"
 world_map$region[world_map$region == "UK"] <- "United Kingdom"
+world_map$region[world_map$region == "Democratic Republic of the Congo"] <- "Congo (Kinshasa)"
 
 # Merge happiness data with world map data
 merged_data <- merge(world_map, happiness_clean, by.x = "region", by.y = "Country", all.x = TRUE) %>%
@@ -1222,7 +1223,7 @@ plot2 <- ggplot(merged_data_2022, aes(map_id = region, fill = Score)) +
   theme_void() +
   scale_fill_carto_c(name = "region",
                            type = "diverging", palette = "Earth", direction = -1, na.value = na_color,
-                     limits = c(0, max(merged_data$Score, na.rm = TRUE))) +
+                     limits = c(0, max(merged_data_2022$Score, na.rm = TRUE))) +
   labs(
     title = "Map of World with Happiness Index Score of 2022",
     subtitle = "This visualization represents the global happiness index scores for the year 2022. <br>The intensity of color corresponds to the happiness score, <br>with darker shades indicating higher scores. Notably, in 2022, the top rankings are all <br>Western European countries, while countries in Sub-Saharan Africa remain to show relatively <br>lower index scores, but the country with the lowest score (Afghanistan) belongs to South Asia, <br>which may be due to the influence of the Taliban.",
