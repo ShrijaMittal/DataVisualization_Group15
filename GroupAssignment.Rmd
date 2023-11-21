@@ -1135,6 +1135,7 @@ ggplot(df_temp, aes(x = GDP_per_cap, y = Corruption, size = SocialSupport)) +
 
 # Plot the world map with happiness scores
 world_map <- map_data("world")
+
 # Replace "USA" and "UK" with "United States" and "United Kingdom" in world_map
 world_map$region[world_map$region == "USA"] <- "United States"
 world_map$region[world_map$region == "UK"] <- "United Kingdom"
