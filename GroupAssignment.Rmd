@@ -1130,8 +1130,8 @@ ggplot(df_temp, aes(x = GDP_per_cap, y = Corruption, size = SocialSupport)) +
   ) 
 ```
 
+## Map for 2015
 ```{r}
-# Map for 2015
 
 # Plot the world map with happiness scores
 world_map <- map_data("world")
@@ -1197,8 +1197,8 @@ plot1 <- ggplot(merged_data, aes(map_id = region, fill = Score)) +
 plot1
 ```
 
+## Map for 2022
 ```{r}
-# Map for 2022
 
 # Create new dataset for 2022 
 merged_data_2022 <- merge(world_map, happiness_clean , by.x = "region", by.y = "Country", all.x = TRUE) %>%
