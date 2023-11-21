@@ -1,0 +1,1130 @@
+---
+title: "Group Assignment"
+author: "Study Group 15"
+date: "2023-11-20"
+output:
+  html_document:
+    theme: flatly
+    highlight: zenburn
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+options(digits = 3)
+
+# default figure size
+knitr::opts_chunk$set(
+  fig.width=6.75, 
+  fig.height=6.75,
+  fig.align = "center"
+)
+```
+
+```{r, libraries, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(janitor)
+library(vroom)
+library(skimr)
+library(sf)
+library(ggplot2)
+library(ggtext)
+library(ggridges)
+library(here)
+library(ggmap)
+library(ggrepel)
+library(gridExtra)
+library(pander)
+library(leaflet)
+library(tmap)
+library(tmaptools)
+library(hrbrthemes)
+library(mapview)
+library(viridis)
+library(showtext)
+library(RColorBrewer)
+library(rcartocolor)
+library(patchwork)
+
+font_add_google("Lato")
+showtext_auto()
+
+
+```
+
+# Introduction
+## Load the data
+```{r load data}
+# Load data for each year
+hi_2015 <- read.csv("data/happiness/2015.csv")
+hi_2016 <- read.csv("data/happiness/2016.csv")
+hi_2017 <- read.csv("data/happiness/2017.csv")
+hi_2018 <- read.csv("data/happiness/2018.csv")
+hi_2019 <- read.csv("data/happiness/2019.csv")
+hi_2020 <- read.csv("data/happiness/2020.csv")
+hi_2021 <- read.csv("data/happiness/2021.csv")
+hi_2022 <- read.csv("data/happiness/2022.csv")
+
+```
+
+## Clean the data
+```{r clean data}
+# The structure of the data for each year is different, hence it has to be aligned before each year is merged together
+
+hi_2015_c <- hi_2015 %>% 
+  
+  # Drop SE as this factors are not used to calculate the 
+  select(-Standard.Error) %>% 
+  
+  # Drop region, so we only use the region structure from 2021 (latest available)
+  select(-Region) %>% 
+
+  # Rename the headers to have the same name for each year
+  rename(Rank = Happiness.Rank,
+         Score = Happiness.Score,
+         SocialSupport = Family, # Family is called Social Support in later years
+         GDP_per_cap = Economy..GDP.per.Capita.,
+         Healthy_Life_Exp = Health..Life.Expectancy.,
+         Corruption = Trust..Government.Corruption.,
+         Dystopia = Dystopia.Residual) %>% 
+  
+  # Create year col.
+  mutate(Year = 2015) %>% 
+  
+  # Change the position to align each year
+  select(Year, Rank, Country, Score, GDP_per_cap, SocialSupport, Healthy_Life_Exp, Freedom, Corruption, Generosity, Dystopia)
+  
+
+hi_2016_c <- hi_2016 %>% 
+  
+  # Drop Lower and Upper CI 
+  select(-Lower.Confidence.Interval, -Upper.Confidence.Interval) %>% 
+
+  # Drop region, so we only use the region structure from 2021 (latest available)
+  select(-Region) %>% 
+
+  # Rename the headers to have the same name for each year
+  rename(Rank = Happiness.Rank,
+         Score = Happiness.Score,
+         SocialSupport = Family, # Family is called Social Support in later years
+         GDP_per_cap = Economy..GDP.per.Capita.,
+         Healthy_Life_Exp = Health..Life.Expectancy.,
+         Corruption = Trust..Government.Corruption.,
+         Dystopia = Dystopia.Residual) %>% 
+  
+  # Create year col.
+  mutate(Year = 2016) %>% 
+  
+  # Change the position to align each year
+  select(Year, Rank, Country, Score, GDP_per_cap, SocialSupport, Healthy_Life_Exp, Freedom, Corruption, Generosity, Dystopia)
+  
+
+hi_2017_c <- hi_2017 %>% 
+  
+  # Drop Lower and Upper CI/Whiskers and Family
+  select(-Whisker.high, -Whisker.low) %>% 
+
+  # Rename the headers to have the same name for each year
+  rename(Rank = Happiness.Rank,
+         Score = Happiness.Score,
+         SocialSupport = Family, # Family is called Social Support in later years
+         GDP_per_cap = Economy..GDP.per.Capita.,
+         Healthy_Life_Exp = Health..Life.Expectancy.,
+         Corruption = Trust..Government.Corruption.,
+         Dystopia = Dystopia.Residual) %>% 
+  
+  # Create year col.
+  mutate(Year = 2017) %>% 
+  
+  # Change the position to align each year
+  select(Year, Rank, Country, Score, GDP_per_cap, SocialSupport, Healthy_Life_Exp, Freedom, Corruption, Generosity, Dystopia)
+  
+
+hi_2018_c <- hi_2018 %>% 
+  
+  # Rename the headers to have the same name for each year
+  rename(Rank = Overall.rank,
+         Country = Country.or.region,
+         GDP_per_cap = GDP.per.capita,
+         Healthy_Life_Exp = Healthy.life.expectancy,
+         Corruption = Perceptions.of.corruption,
+         Freedom = Freedom.to.make.life.choices,
+         SocialSupport = Social.support) %>% 
+  
+  # Add Dystopia, which is the difference between sum of all values and the Score
+  mutate(Dystopia = Score - rowSums(select(., 4:9))) %>% 
+  
+  # Create year col.
+  mutate(Year = 2018) %>% 
+  
+  # Change the position to align each year
+  select(Year, Rank, Country, Score, GDP_per_cap, SocialSupport, Healthy_Life_Exp, Freedom, Corruption, Generosity, Dystopia)
+
+  
+hi_2019_c <- hi_2019 %>% 
+  
+  # Rename the headers to have the same name for each year
+  rename(Rank = Overall.rank,
+         Country = Country.or.region,
+         GDP_per_cap = GDP.per.capita,
+         Healthy_Life_Exp = Healthy.life.expectancy,
+         Corruption = Perceptions.of.corruption,
+         Freedom = Freedom.to.make.life.choices,
+         SocialSupport = Social.support) %>% 
+
+  # Add Dystopia, which is the difference between sum of all values and the Score
+  mutate(Dystopia = Score - rowSums(select(., 4:9))) %>% 
+  
+  # Create year col.
+  mutate(Year = 2019) %>% 
+  
+  # Change the position to align each year
+  select(Year, Rank, Country, Score, GDP_per_cap, SocialSupport, Healthy_Life_Exp, Freedom, Corruption, Generosity, Dystopia)
+
+
+
+hi_2020_c <- hi_2020 %>% 
+ 
+  # Drop Region and input values used to calcualte each attributing factor (making it comparable with previous years) 
+  select(-c(2, 4:13)) %>% 
+  
+  # Rename the headers to have the same name for each year
+  rename(Country = Country.name,
+         Score = Ladder.score,
+         GDP_per_cap = Explained.by..Log.GDP.per.capita,
+         Healthy_Life_Exp = Explained.by..Healthy.life.expectancy,
+         Corruption = Explained.by..Perceptions.of.corruption,
+         Freedom = Explained.by..Freedom.to.make.life.choices,
+         SocialSupport = Explained.by..Social.support,
+         Generosity = Explained.by..Generosity,
+         Dystopia = Dystopia...residual) %>% 
+  
+  # Create rank column
+  arrange(desc(Score)) %>%
+  
+  mutate(Rank = row_number()) %>% 
+  
+  # Create year col.
+  mutate(Year = 2020) %>% 
+  
+  # Change the position to align each year
+  select(Year, Rank, Country, Score, GDP_per_cap, SocialSupport, Healthy_Life_Exp, Freedom, Corruption, Generosity, Dystopia)
+
+
+hi_2021_c <- hi_2021 %>% 
+ 
+  # Drop Region and input values used to calcualte each attributing factor (making it comparable with previous years) 
+  select(-c(2, 4:13)) %>% 
+  
+  # Rename the headers to have the same name for each year
+  rename(Country = Country.name,
+         Score = Ladder.score,
+         GDP_per_cap = Explained.by..Log.GDP.per.capita,
+         Healthy_Life_Exp = Explained.by..Healthy.life.expectancy,
+         Corruption = Explained.by..Perceptions.of.corruption,
+         Freedom = Explained.by..Freedom.to.make.life.choices,
+         SocialSupport = Explained.by..Social.support,
+         Generosity = Explained.by..Generosity,
+         Dystopia = Dystopia...residual) %>% 
+  
+  # Create rank column
+  arrange(desc(Score)) %>%
+  mutate(Rank = row_number()) %>% 
+  
+  # Create year col.
+  mutate(Year = 2021) %>% 
+  
+  # Change the position to align each year
+  select(Year, Rank, Country, Score, GDP_per_cap, SocialSupport, Healthy_Life_Exp, Freedom, Corruption, Generosity, Dystopia)
+
+
+hi_2022_c <- hi_2022 %>% 
+  
+  # Drop high/low CI
+  select(-Whisker.high, -Whisker.low) %>% 
+  
+  # Rename the headers to have the same name for each year
+  rename(Rank = RANK,
+         Score = Happiness.score,
+         GDP_per_cap = Explained.by..GDP.per.capita,
+         Healthy_Life_Exp = Explained.by..Healthy.life.expectancy,
+         Corruption = Explained.by..Perceptions.of.corruption,
+         Freedom = Explained.by..Freedom.to.make.life.choices,
+         SocialSupport = Explained.by..Social.support,
+         Generosity = Explained.by..Generosity,
+         Dystopia = Dystopia..1.83....residual) %>% 
+  
+  # Create year col.
+  mutate(Year = 2022) %>% 
+  
+  # Change the position to align each year
+  select(Year, Rank, Country, Score, GDP_per_cap, SocialSupport, Healthy_Life_Exp, Freedom, Corruption, Generosity, Dystopia)
+  
+
+# Add each dataset together
+happiness <- rbind(hi_2015_c, hi_2016_c, hi_2017_c, hi_2018_c, hi_2019_c, hi_2020_c, hi_2021_c, hi_2022_c) %>% 
+  
+  # Fix names for countries
+  mutate(Country = ifelse(Country == "Guatemala*", "Guatemala", Country),
+         Country = ifelse(Country == "Madagascar*", "Madagascar", Country),
+         Country = ifelse(Country == "Trinidad & Tobago", "Trinidad and Tobago", Country))
+
+
+# Create regions dataset
+regions <- hi_2020 %>% 
+  select(c(1:2)) %>% 
+  rename(Country = Country.name,
+         Region = Regional.indicator) %>% 
+  mutate(Region = ifelse(Region == "Commonwealth of Independent States", "Independent States (CIS)", Region))
+
+# Join regions to the dataset
+happiness <- happiness %>% 
+  left_join(regions,
+            by = "Country")
+
+# Check rows with NA in regions and assign a region to these countries
+no_region <- happiness %>% 
+  select(Country, Region) %>% 
+  filter(is.na(Region)) %>% 
+  distinct()
+
+# Find region for Countries in 2015 and add this to countries with no region
+regions15 <- hi_2015 %>% 
+  select(c(1:2))
+
+no_region2 <- no_region %>% 
+  select(-Region) %>% 
+  left_join(regions15,
+            by = "Country") %>% 
+  
+  # Add regions to the few remaining countries
+  mutate(Region = ifelse(Country == "Puerto Rico", "Latin America and Caribbean", Region),
+         Region = ifelse(Country == "Belize", "Latin America and Caribbean", Region),
+         Region = ifelse(Country == "North Macedonia", "Central and Eastern Europe", Region),
+         Region = ifelse(Country == "Eswatini", "Sub-Saharan Africa", Region))
+
+# Join the missing regions to the dataset
+happiness_clean <- happiness %>%
+  left_join(no_region2, by = "Country", suffix = c("", "_nr2")) %>%
+  mutate(Region = ifelse(is.na(Region_nr2), Region, Region_nr2)) %>%
+  select(-Region_nr2) %>% 
+  
+  # Move up the region col next to Country
+  select(Country, Region, Year, Rank, everything()) %>% 
+  
+  # Combine Region names to decrease # of regions
+  mutate(Region = ifelse(Region == "Southern Asia", "South Asia", Region),
+         Region = ifelse(Region == "Middle East and Northern Africa", "Middle East and North Africa", Region))
+
+# Skim the data to check that the data now has the intended structure
+skim(happiness_clean)
+
+# The data now seems to be aligned and cleaned. We can now start making visualizations (YEESS!!)
+
+# write.csv(happiness_clean, "happiness_clean.csv", row.names = FALSE)
+
+```
+
+# Visualizations
+```{r set theme}
+
+theme_set(theme_minimal(base_family = "Lato"))
+
+
+```
+
+
+
+## Change over time
+
+```{r G1, fig.width=10, fig.height=6, warning=FALSE, message=FALSE}
+
+text_label1 <- "Central and Eastern Europe increased\nmean happiness by 13%"
+
+last_points <- happiness_clean %>% 
+  group_by(Region, Year) %>% 
+  summarise(mean = mean(Score)) %>% 
+  filter(Year == 2022) %>%
+  ungroup()
+
+happiness_clean %>% 
+  group_by(Region, Year) %>% 
+  summarise(mean = mean(Score)) %>%
+  
+  mutate(name_lab = if_else(Year == 2022, Region, NA_character_)) %>% 
+  
+  ggplot(aes(x = Year, y = mean, color = Region))+
+  geom_line(size = .8)+
+  
+  theme_minimal()+
+  # Tidy up grid-lines
+  theme(
+  # The length of the axis ticks is increased.
+  axis.ticks.length.x = unit(1.3, "lines"),
+  axis.ticks.length.y = unit(.7, "lines"),
+  
+  # Remove the minor grid lines on x axis
+  panel.grid.minor.x = element_blank(),
+  
+  # Customize margin values (top, right, bottom, left)
+  plot.margin = margin(10, 40, 10, 40),
+  
+    # Customize title appearence
+  plot.title = element_text(
+    color = "grey10", 
+    size = 20, 
+    face = "bold",
+    margin = margin(t = 5)
+  ),
+  # Customize subtitle appearence
+  plot.subtitle = element_markdown(
+    color = "grey30", 
+    size = 14,
+    lineheight = 1,
+    margin = margin(t = 5, b = 10)
+  ),
+  # Title and caption are going to be aligned
+  plot.title.position = "plot",
+  plot.caption.position = "plot",
+  plot.caption = element_text(
+    color = "grey30", 
+    size = 9,
+    lineheight = 1.2, 
+    hjust = 0,
+    margin = margin(t = 10)
+  ),
+  # Remove legend
+  legend.position = "none",
+  
+  axis.text.x = element_text(size = 12),
+  
+  axis.text.y = element_text(size = 12)
+)+
+
+  
+  # Tiy up the format and add text
+  labs(
+    title = "Western Europe and North America and ANZ remains the leaders in mean happiness",
+    subtitle = "Central and Eastern Europe has had the highest increase in mean happiness in the period with a 13% increase.<br>Interestingly, Covid-19 seems to have had no meaningful impact on mean happiness across regions, apart from South Asia,<br>which dropped by 4% from 2019 to 2022",
+    caption = "Source: World Happiness Index, 2015-2022",
+    color = "Region",
+    x = NULL,
+    y = "Mean Happiness Score"
+  )+
+  
+  # Add text to the right of the lines
+  geom_text_repel(
+    aes(color = Region, label = name_lab),
+    family = "Lato",
+    fontface = "bold",
+    size = 4.5,
+    direction = "y",
+    xlim = c(2022.2, NA),
+    hjust = 0,
+    segment.size = .7,
+    segment.alpha = .5,
+    segment.linetype = "dotted",
+    box.padding = .4,
+    segment.curvature = -0.1,
+    segment.ncp = 3,
+    segment.angle = 20
+  )  +
+  
+  ## coordinate system + scales
+  coord_cartesian(
+    clip = "off",
+    ylim = c(3.5, 7.5)
+  ) +
+  scale_x_continuous(
+    expand = c(0, 0),
+    limits = c(2015, 2024.3), 
+    breaks = seq(2015, 2022, by = 2)
+  )+
+  
+   scale_y_continuous(
+    expand = c(0, 0))+
+  
+  scale_color_carto_d(name = "Region", palette = "Earth", type = "diverging") +
+
+    #add a curve to draw attention to a value
+    geom_curve(
+      data = data.frame(x = 2020.8, y = 6.25, xend = 2021.8, yend = 6.13),
+      mapping = aes(x = x, y = y, xend = xend, yend = yend),
+      colour = "tomato",
+      size = 0.5,
+      curvature = -0.4,
+      arrow = arrow(length = unit(2, "mm"), type = "closed"),
+      inherit.aes = FALSE
+    ) +
+    
+    # add the text label on the graph
+    geom_text(
+      data = data.frame(x = 2020, y = 6.4, label = text_label1),
+      aes(x = x, y = y, label = text_label1),
+      colour="black",
+      family="Lato",
+      hjust = 0.5,
+      lineheight = .8,
+      inherit.aes = FALSE,
+      size = 4
+    )
+  
+
+
+```
+
+
+## Top risers and fallers
+
+```{r G2, warning=FALSE, message=FALSE}
+# Top 20 nations with the highest growth in happiness score and the highest decline/lowest growth
+
+# Calculate the change in happiness score
+score_change <- happiness_clean %>% 
+  filter(Year %in% c(2015, 2022)) %>% 
+  group_by(Country, Region) %>% 
+  summarise(Change = diff(Score))
+
+# Find the top 20 countries with the highest growth
+top_20 <- score_change %>% 
+  arrange(desc(Change)) %>% 
+  ungroup() %>% 
+  slice(1:20) 
+
+# Highlight countries in Sub-Saharan Africa and Central and Eastern Europe
+highlights_top <- top_20 %>% 
+  filter(Region == "Sub-Saharan Africa" | Region == "Central and Eastern Europe") %>% 
+  select(Region) %>% 
+  pull()
+
+top_colors <- c('#9C6F32', 'grey60', '#6597A3')
+
+
+top_20_plot <-top_20 %>% 
+  # Create a group for coloring
+  mutate(group = ifelse(Region %in% highlights_top, Region, "Other Regions")) %>% 
+
+  # Create the graph
+  ggplot(aes(x = Change, y = reorder(Country, Change), fill = group)) +
+  
+  # Add vertical gridlines
+  geom_vline(
+    xintercept = seq(0.5, 1.5, by = 0.5),
+    color = "grey91", 
+    size = .6
+  )+
+  
+  geom_col() +
+    
+  # Place the datalabels inside the graph
+  geom_text(aes(label = Country),
+              position = position_stack(vjust = 0.01),
+              hjust = 0, color = "white",
+              fontface = 'bold') +
+  theme_minimal() +
+  
+  # Choose the selected colors
+  scale_fill_manual(values = top_colors) +
+  
+  theme(
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),
+    
+      # Customize margin values (top, right, bottom, left)
+  plot.margin = margin(10, 40, 10, 40),
+  
+  # Move legend box
+  legend.position = c(1, .50),
+  legend.justification = c("right", "top"),
+  
+    # Customize title appearence
+  plot.title = element_text(
+    color = "grey10", 
+    size = 16, 
+    face = "bold",
+    margin = margin(t = 5)
+  ),
+  # Customize subtitle appearence
+  plot.subtitle = element_markdown(
+    color = "grey30", 
+    size = 11,
+    lineheight = 1,
+    margin = margin(t = 5, b = 10)
+  ),
+  # Title and caption are going to be aligned
+  plot.title.position = "plot",
+  plot.caption.position = "plot",
+  plot.caption = element_text(
+    color = "grey30", 
+    size = 9,
+    lineheight = 1.2, 
+    hjust = 0,
+    margin = margin(t = 10)
+  ))+
+  
+  labs(
+    title = "C&E Europe and Sub-Saharan Africa make up 75% of top 20 risers",
+    subtitle = "7 out of 17 countries in Central and Eastern Europe are among the top 20 risers,contributing to making<br>C&E Europe the highest growing region. Interestingly, Sub-Saharan Africa countries account for 40% of the<br>top 20 risers, however the region saw little growth on an mean level, indicating polarization in the region",
+    caption = "Source: World Happiness Index, 2015-2022",
+    y = NULL,
+    x = "Change in Happiness Score from 2015 to 2022",
+    fill = "Region"
+  )
+
+
+# Find the bottom 20 countries with the highest decline
+bottom_20 <- score_change %>% 
+  arrange(Change) %>% 
+  ungroup() %>% 
+  slice(1:20)
+
+# Highlight countries in Sub-Saharan Africa and Latin America and Caribbean
+highlights_bottom <- bottom_20 %>% 
+  filter(Region == "Sub-Saharan Africa" | Region == "Latin America and Caribbean") %>% 
+  select(Region) %>% 
+  pull()
+
+bottom_colors <- c('#CFBC8B', 'grey60', '#6597A3')
+
+bottom_20_plot <- bottom_20 %>% 
+  # Create a group for coloring
+  mutate(group = ifelse(Region %in% highlights_bottom, Region, "Other Regions")) %>% 
+
+  # Create the graph
+  ggplot(aes(x = Change, y = reorder(Country, -Change,), fill = group)) +
+  
+  # Add vertical gridlines
+  geom_vline(
+    xintercept = seq(-0.5, -2, by = -0.5),
+    color = "grey91", 
+    size = .6
+  )+
+  
+  geom_col() +
+    
+  # Place the datalabels inside the graph
+  geom_text(aes(label = Country),
+              position = position_stack(vjust = 0.98),
+              hjust = 1, color = "white",
+              fontface = 'bold') +
+  theme_minimal() +
+  
+  # Choose the selected colors
+  scale_fill_manual(values = bottom_colors) +
+  
+  theme(
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),
+    
+  # Customize margin values (top, right, bottom, left)
+  plot.margin = margin(10, 40, 10, 40),
+  
+  # Move legend box
+  legend.position = c(.35, .50),
+  legend.justification = c("right", "top"),
+  
+    # Customize title appearence
+  plot.title = element_text(
+    color = "grey10", 
+    size = 16, 
+    face = "bold",
+    margin = margin(t = 5)
+  ),
+  # Customize subtitle appearence
+  plot.subtitle = element_markdown(
+    color = "grey30", 
+    size = 11,
+    lineheight = 1,
+    margin = margin(t = 5, b = 10)
+  ),
+  # Title and caption are going to be aligned
+  plot.title.position = "plot",
+  plot.caption.position = "plot",
+  plot.caption = element_text(
+    color = "grey30", 
+    size = 9,
+    lineheight = 1.2, 
+    hjust = 0,
+    margin = margin(t = 10)
+  ))+
+  
+  labs(
+    title = "Interestingly, Sub-Saharan Africa also make up 35% of top 20 fallers",
+    subtitle = "When exaiming the top 20 risers and fallers, the polarization in Sub-Saharan countries becomes evident,<br>with the region holding 40% of the top 20 risers and 35% of the top 20 fallers. Latin American & Caribbianas<br>well as South/Southeast Asia also include most of the top fallers in the period.",
+    caption = "Source: World Happiness Index, 2015-2022",
+    y = NULL,
+    x = "Change in Happiness Score from 2015 to 2022",
+    fill = "Region"
+  )
+
+top_20_plot
+bottom_20_plot
+
+```
+
+
+```{r, change leading to growth, warning=FALSE, message=FALSE}
+
+c1_colors <- c('grey60', '#6597A3')
+c2_colors <- c('grey60', '#E1DBB0')
+
+
+ivory_coast <- happiness_clean %>% 
+  
+  # Select the intended country
+  filter(Country == "Ivory Coast") %>% 
+  
+  # Select the two years we are interested in
+  filter(Year %in% c(2015, 2022)) %>% 
+  
+  # Drop unnecessary cols and pivot longer to enable graph creation
+  select(-Region, -Rank, -Score) %>% 
+  pivot_longer(c(3:9),
+               names_to = "factors",
+               values_to = "factor_score") %>% 
+  
+  # Change order 
+  mutate(factors = fct_reorder(factors, factor_score, .desc = TRUE)) %>% 
+  
+  # Make ggplot showing change in factors contributing to the calculation of happiness score
+  ggplot(aes(x = factors, y = factor_score, fill = as.factor(Year)))+
+  
+  # Make format of the bars
+  geom_bar(stat = "identity", position = "dodge")+
+  
+  # Choose the selected colors
+  scale_fill_manual(values = c1_colors) +
+
+  theme(
+  # Customize margin values (top, right, bottom, left)
+  plot.margin = margin(10, 40, 10, 40),
+  
+  # Clean up gridlines
+  panel.grid.major.x = element_blank(),
+  panel.grid.minor.y = element_blank(),
+  
+    # Customize title appearence
+  plot.title = element_text(
+    color = "grey10", 
+    size = 16, 
+    face = "bold",
+    margin = margin(t = 5)
+  ),
+  # Customize subtitle appearence
+  plot.subtitle = element_markdown(
+    color = "grey30", 
+    size = 11,
+    lineheight = 1,
+    margin = margin(t = 5, b = 10)
+  ),
+  # Title and caption are going to be aligned
+  plot.title.position = "plot",
+  plot.caption.position = "plot",
+  plot.caption = element_text(
+    color = "grey30", 
+    size = 9,
+    lineheight = 1.2, 
+    hjust = 0,
+    margin = margin(t = 10)
+  ))+
+  
+  labs(
+    title = "Dystopia and GDP per Capita Drove the Increase in Ivory Coast's Happiness Score",
+    subtitle = "Ivory Coast was the country with the highest increase in Happiness Score from 2015 to 2022.<br>The increase was driven by large improvement in GDP per capita, healthy life expectancy, and dystopia.",
+    caption = "Source: World Happiness Index, 2015-2022",
+    y = "Score of for each Factor",
+    x = "Factors making up the Happiness Score",
+    fill = "Year"
+  )
+
+
+
+lebanon <- happiness_clean %>% 
+  
+  # Select the intended country
+  filter(Country == "Lebanon") %>% 
+  
+  # Select the two years we are interested in
+  filter(Year %in% c(2015, 2022)) %>% 
+  
+  # Drop unnecessary cols and pivot longer to enable graph creation
+  select(-Region, -Rank, -Score) %>% 
+  pivot_longer(c(3:9),
+               names_to = "factors",
+               values_to = "factor_score") %>% 
+  
+  # Change order 
+  mutate(factors = fct_reorder(factors, factor_score, .desc = TRUE)) %>% 
+  
+  # Make ggplot showing change in factors contributing to the calculation of happiness score
+  ggplot(aes(x = factors, y = factor_score, fill = as.factor(Year)))+
+  
+  # Make format of the bars
+  geom_bar(stat = "identity", position = "dodge")+
+  
+  # Choose the selected colors
+  scale_fill_manual(values = c2_colors) +
+
+  theme(
+  # Customize margin values (top, right, bottom, left)
+  plot.margin = margin(10, 40, 10, 40),
+  
+  # Clean up gridlines
+  panel.grid.major.x = element_blank(),
+  panel.grid.minor.y = element_blank(),
+  
+    # Customize title appearence
+  plot.title = element_text(
+    color = "grey10", 
+    size = 16, 
+    face = "bold",
+    margin = margin(t = 5)
+  ),
+  # Customize subtitle appearence
+  plot.subtitle = element_markdown(
+    color = "grey30", 
+    size = 11,
+    lineheight = 1,
+    margin = margin(t = 5, b = 10)
+  ),
+  # Title and caption are going to be aligned
+  plot.title.position = "plot",
+  plot.caption.position = "plot",
+  plot.caption = element_text(
+    color = "grey30", 
+    size = 9,
+    lineheight = 1.2, 
+    hjust = 0,
+    margin = margin(t = 10)
+  ))+
+  
+  labs(
+    title = "Despite an increase in GDP per Capita, Lebanon Suffered a Severe Drop in Happiness Score",
+    subtitle = "When exaiming Lebanon change in happiness score, the change was mostly driven by a substantialdrop in dystopia. <br>All other factors also decreased slightly, hence Lebanon suffered a drop in overall happiness score, <br>despite having an increase in GDP per Capita",
+    caption = "Source: World Happiness Index, 2015-2022",
+    y = "Score of for each Factor",
+    x = "Factors making up the Happiness Score",
+    fill = "Year"
+  )
+
+ivory_coast
+lebanon
+
+
+```
+
+
+##Graph: Violin
+
+```{r violin, fig.width=10, fig.height=6, warning=FALSE, message=FALSE}
+
+#y = GDP_per_cap or life expectancy
+#x = region
+
+colours = c("#515B64", "#e50000")
+regions = c("Western Europe", "North America and ANZ")
+happiness_clean %>% 
+  
+  #create variable to apply separate colours.
+  mutate(top2 = ifelse(Region %in% regions, TRUE, FALSE)) %>% 
+  #violin plot with box plot inside
+  ggplot(aes(x = Region, y=GDP_per_cap), color = top2) + geom_violin(aes(colour = top2),trim=FALSE, size = 1) + geom_boxplot(width=0.1)+
+  labs(
+    #str_wrap removes the hanging indent in the second line of title and subtitle.
+    title = str_wrap(
+      "North America and Western Europe are ahead of others in GDP per capita, with lower change between countries in these regions compared to others",
+      indent = 0),
+    subtitle = str_wrap("Economic strength is considered to be one of the biggest contributors to 
+    happiness, which cements these countries' rankings on top of the happiness ranking charts",indent = 0),
+    x = "Region",
+    y = "GDP per capita"
+  ) + scale_colour_manual(values = colours) + 
+  #angling text a little and adjusting so they don't overlap or clip into the graph
+  theme(axis.text.x = element_text(size=8, angle=25, vjust = 0.6)) + 
+  #making font size identical to previous graph
+  theme(legend.position = "none") + theme(plot.title = element_text(
+    color = "grey10", 
+    size = 16, 
+    face = "bold"))
+  #theme(axis.text.x = element_text(size=8, angle=25, vjust = 0.6))
+```
+
+
+## Scatter correlation
+
+```{r scatters,  fig.width=10, fig.height=6, warning=FALSE, message=FALSE}
+library(ggpubr) #need this to ggarrange
+
+colours <- c("#872341","#ED5AB3","#001B79")
+
+pGDP <- happiness_clean %>% 
+  filter(Year >= 2020) %>% 
+  ggplot(aes(x = GDP_per_cap, y = Score, group = Year, colour = as.factor(Year))) +
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE) +
+  scale_colour_manual(values = colours) +
+  labs(
+    y = "Happiness Score",
+    x = "GDP per capita"
+  )
+pSocial <- happiness_clean %>% 
+  filter(Year >= 2020) %>% 
+  ggplot(aes(x = SocialSupport, y = Score, group = Year, colour  = as.factor(Year))) + 
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE) +
+  scale_colour_manual(values = colours) +
+    labs(
+    y = "Happiness Score",
+    x = "Social Support"
+  )
+pLife <- happiness_clean %>% 
+  filter(Year >= 2020) %>% 
+  ggplot(aes(x = Healthy_Life_Exp, y = Score, group = Year, colour  = as.factor(Year))) + 
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE) +
+  scale_colour_manual(values = colours) +
+    labs(
+    y = "Happiness Score",
+    x = "Life Expectancy"
+    )
+pFree <- happiness_clean %>% 
+  filter(Year >= 2020) %>% 
+  ggplot(aes(x = Freedom, y = Score, group = Year, colour  = as.factor(Year))) + 
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE) +
+  scale_colour_manual(values = colours)+
+    labs(
+    y = "Happiness Score",
+    x = "Freedom"
+    )
+pCorr <- happiness_clean %>% 
+  filter(Year >= 2020) %>% 
+  ggplot(aes(x = Corruption, y = Score, group = Year, colour  = as.factor(Year))) +
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE) +
+  scale_colour_manual(values = colours)+
+    labs(
+    y = "Happiness Score",
+    x = "Perception of Corruption"
+    )
+pGene <- happiness_clean %>% 
+  filter(Year >= 2020) %>% 
+  ggplot(aes(x = Generosity, y = Score, group = Year, colour  = as.factor(Year))) + 
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE) +
+  scale_colour_manual(values = colours)+
+    labs(
+    y = "Happiness Score",
+    x = "Generosity"
+    )
+
+#this is used to change legend title to "Year" from "as.factor(Year)". 
+pGDP <- pGDP + guides(color = guide_legend(title = "Year"))
+pSocial <- pSocial + guides(color = guide_legend(title = "Year"))
+pLife <- pLife + guides(color = guide_legend(title = "Year"))
+pFree <- pFree + guides(color = guide_legend(title = "Year"))
+pCorr <- pCorr + guides(color = guide_legend(title = "Year"))
+pGene <- pGene + guides(color = guide_legend(title = "Year"))
+
+
+title <- "Some Variables Have Greater Effect on World Happiness Rankings"
+subtitle <- "With Generosity carrying a noticeably lower impact, GDP per capita,
+Healthy Life Expectancy and Social Support are the main drivers of happiness"
+
+(pGDP + pSocial + pLife) / (pFree + pCorr + pGene) +
+    plot_layout(guides = "collect") +
+  plot_annotation(
+    title = title,
+    subtitle = subtitle,
+    tag_levels = 'A',
+    theme = theme(plot.title = element_text(hjust = 0, size = 14, face = "bold")) 
+  )
+
+
+```
+
+
+## Social Support focus
+
+```{r, Bfocus, warning=FALSE, message=FALSE}
+colours2 = c("#872341","#ED5AB3")
+
+pSocial2 <- happiness_clean %>% 
+  filter(Year == 2020 | Year == 2021) %>% 
+  ggplot(aes(x = Score, y = SocialSupport, group = Year, colour  = as.factor(Year))) + 
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE) +
+  scale_colour_manual(values = colours2) +
+    labs(
+    y = "Social Support",
+    x = "Happiness Score"
+  )
+
+#this is used to change legend title to "Year" from "as.factor(Year)". 
+pSocial2 <- pSocial2 + guides(color = guide_legend(title = "Year"))
+
+
+
+title <- "Social Support decreased noticeably during Covid"
+subtitle <- "Quarantine and sedentary living seem to have affected social bonds
+negatively with people feeling more isolated."
+
+pSocial2 +
+  plot_annotation(
+    title = title,
+    subtitle = subtitle,
+    theme = theme(plot.title = element_text(hjust = 0, size = 14, face = "bold")) 
+  )
+
+```
+
+
+## Healthy Life Expectancy
+
+```{r}
+# Create a new dataframe grouped by countries and years
+grouped_data <- happiness_clean %>%
+  mutate(Country = fct_reorder(Country, Healthy_Life_Exp, median))
+
+# Choose the top 20 countries with the highest life expectancy
+top_countries <- grouped_data %>%
+  group_by(Year) %>%
+  slice_max(order_by = Healthy_Life_Exp, n = 15)
+
+# Filter the grouped_data to include only the top 20 countries for each year
+grouped_data_filtered <- grouped_data %>%
+  filter(Country %in% top_countries$Country)
+
+# Create a heatmap for the top 20 countries
+ggplot(grouped_data_filtered, aes(x = Year, y = Country, fill = Healthy_Life_Exp)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "A") +
+  theme_minimal(base_size = 12) +
+  # scale_fill_gradient(low = "#CFBC8B", high = "#6597A3") +
+
+  # Customize plot appearance
+  theme(
+    axis.text.x = element_text(size = 8),  # Adjust x-axis label size
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_text(size = 9),  # Adjust x-axis title size
+    axis.title.y = element_text(size = 9),   # Adjust y-axis title size
+    legend.title = element_text(size = 9),
+
+    # Customize title appearance
+    plot.title = element_text(
+      color = "grey10", 
+      size = 14, 
+      face = "bold",
+      margin = margin(t = 5)
+    ),
+
+    # Customize subtitle appearance
+    plot.subtitle = element_markdown(
+      color = "grey30", 
+      size = 10,
+      lineheight = 1,
+      margin = margin(t = 5, b = 10)
+    ),
+
+    # Title and caption alignment
+    plot.title.position = "plot",
+    plot.caption.position = "plot",
+
+    # Customize caption appearance
+    plot.caption = element_text(
+      color = "grey30", 
+      size = 9,
+      lineheight = 1.2, 
+      hjust = 0,
+      margin = margin(t = 10)
+    )
+  ) +
+
+  # Set plot labels and fill legend
+  labs(
+    title = "Impact of Global COVID-19 Pandemic on Life Expectancy: How Life \nExpectancy Drastically Changed in 2021 for Top 20 Happiest Countries",
+    subtitle = "Examining the data unveiled a substantial rise in global mortality rates amid the COVID-19 pandemic,<br> leading to a widespread decrease in global life expectancy and signaling an unparalleled impact on our <br>collective health.",
+    caption = "Source: World Happiness Index, 2015-2022",
+    x = "Year-on-year change in Life Expectancy",
+    fill = "Life Expectancy"
+  )
+
+```
+
+## Top 20 countries
+
+```{r, warning=FALSE, message=FALSE}
+# Filter the happiness_clean dataset for the year 2022, arrange by Rank, and select the top 20 entries
+df_temp <- happiness_clean %>% 
+  filter(Year == 2022) %>% 
+  arrange(Rank) %>% 
+  head(20)
+
+# Create a scatter plot using ggplot for the top 20 countries in 2022
+ggplot(df_temp, aes(x = GDP_per_cap, y = Corruption, size = SocialSupport)) +
+  geom_point(alpha = 0.7, aes(color = Region)) +
+  scale_size_continuous(range = c(3, 15)) +  # Adjust the size range as needed
+  theme_minimal() +
+  scale_color_brewer(palette = "Set2") +
+  geom_text(aes(label = Country), size = 3, vjust = 1, hjust = 0.5) +
+  scale_x_continuous(limits = c(1.75, 2.25)) +
+
+  # Customize plot appearance
+  theme(
+    axis.text.x = element_text(size = 8),  # Adjust x-axis label size
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_text(size = 9),  # Adjust x-axis title size
+    axis.title.y = element_text(size = 9),   # Adjust y-axis title size
+    legend.title = element_text(size = 9),
+
+    # Customize title appearance
+    plot.title = element_text(
+      color = "grey10", 
+      size = 14, 
+      face = "bold",
+      margin = margin(t = 5)
+    ),
+
+    # Customize subtitle appearance
+    plot.subtitle = element_markdown(
+      color = "grey30", 
+      size = 9.5,
+      lineheight = 1,
+      margin = margin(t = 5, b = 10)
+    ),
+
+    # Title and caption alignment
+    plot.title.position = "plot",
+    plot.caption.position = "plot",
+
+    # Customize caption appearance
+    plot.caption = element_text(
+      color = "grey30", 
+      size = 9,
+      lineheight = 1.2, 
+      hjust = 0,
+      margin = margin(t = 10)
+    )
+  ) +
+
+  # Set plot labels and fill legend
+  labs(
+    title = "Israel and Czech Republic Bridge the Gap to the top 20 with High Social Support, \nAgainst Prior Belief of the Need for High GDP per Capita",
+    subtitle = "While Western European countries typically show high GDP per capita and social support, Israel and Czech <br>Republic challenge this trend. Despite a lower GDP per capita, Israel and Czech Republic maintain remarkable <br>social support, challenging the belief that economic wealth alone drives strong social bonds.",
+    caption = "Source: World Happiness Index, 2015-2022",
+    x = "GDP per capita",
+    y = "Corruption",
+    size = "SocialSupport"
+  ) 
+
+```
+
